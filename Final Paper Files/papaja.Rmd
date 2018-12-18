@@ -1,0 +1,357 @@
+---
+title             : "The Effect of Definiteness and Accessibility of Recipient and Theme on NP Realization of Recipient Regarding Spoken and Written Corpora"
+shorttitle        : "The Effect of Definiteness and Accessibility"
+date              : "December 30, 2017"
+
+author: 
+  - name          : "Utku Turk"
+    affiliation   : "1"
+    email         : "utku.turk@boun.edu.tr"
+
+affiliation:
+  - id            : "1"
+    institution   : "Department of Linguistics, Boğaziçi University"
+
+author_note: |
+  Utku Turk, M.A. student at the Department of Linguistics, Boğaziçi University.
+
+abstract: |
+  Up until today, the introspection procedure has been extensively used, yet it was challenged to this degree only in the recent years. This procedure allows linguists to  gather observational data which has empirical status to some extent. However, presenting a set of sentences and expecting native judgments on these sentences can be quite misleading. The sentences prepared by the researcher may lead participants towards the researcher's bias unless the sentences and the observational process is prepared thoroughly. Because corpora have become widespread and are easy to analyze thanks to recent developments incomputer science, many researchers have started to use daily linguistic data without setting limitations. In this paper, a dataset describing the details of the use of the dative structure in English in the Switchboard corpus and the Treebank Wall Street Journal collection has been used to account for the effects of the definiteness and the accessibility of both the recipient and the theme on the realization of the dative structure in English sentences. 
+  
+keywords          : "R, Ditransitive predicates, NP Realization, Definiteness, Accessibility"
+
+bibliography      : ["r-references.bib"]
+
+figsintext        : yes
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+lineno            : no
+mask              : no
+
+lang              : "english"
+class             : "man"
+output            : papaja::apa6_pdf
+---
+
+```{r packages, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+library(coda)
+library(knitr)
+library(brms)
+library(languageR)
+library(papaja)
+library(citr)
+library(lazerhawk)
+library(pander)
+
+```
+# The Problem
+```{r dataset, include=FALSE}
+data("dative")
+dative$corpus_id <- ifelse(dative$Speaker == "NA" 
+                           , 1 
+                           , 0)
+dative %<>% dplyr::select(corpus_id
+                          , DefinOfRec
+                          , DefinOfTheme
+                          , AccessOfRec
+                          , AccessOfTheme
+                          , RealizationOfRecipient)
+dative[is.na(dative)] <- 1
+corpusmean <- mean(dative$corpus_id)
+dative$corpus <- ifelse(dative$corpus_id == 1 
+                        , "Switchboard" 
+                        , "Treebank Wall Street") %>% as.factor()
+dative$RR <- ifelse(dative$RealizationOfRecipient == "NP" 
+                    , 1 
+                    , 0)
+dative$DR <- ifelse(dative$DefinOfRec == "definite" 
+                    , 1 
+                    , 0)
+dative$DT <- ifelse(dative$DefinOfTheme == "definite" 
+                    , 1 
+                    , 0)
+
+```
+Big data and the advanced use of statistical tools allow us to answer one of the intriguing questions:  How do people form ditransitive predicates and which factors determine the internal structure of the verb phrase? Traditionally, these kinds of grammatical structures in English have been analyzed from a more theoretical perspective and have focused on native judgments, thus making it impossible to differentiate the results from the researcher’s own intuition. Moreover, many studies have indeliberately shown that judgments are extremely problematic, and most of the time these judgments come from an extremely restricted group of people, a bell-jar around the researcher. Both of these problematic situations are exemplified comprehensively by studies on dative alternation [@Bresnan2007], which is the main focus of this paper.
+
+In this paper, the main question I asked and set out to find an explanation for is as follows:  What determines the phrasal structure of ditransitive predicates in English? Throughout the paper and the data analysis, two distinct characteristics of both the recipient and the theme are used to identify when and why native speakers of English choose to use prepositional dative structures. The independent variables in this analysis are the definiteness of recipient, the definiteness of theme, the accessibility of theme, and the accessibility of recipient. With these variables, I aim to explain the effect of definiteness and accesibility on dative structures in English sentences while accounting for different corpora consisting of written and spoken media separately.
+
+
+# The Dataset
+
+The dataset used in this paper is from the R package languageR named dative from the study by @Bresnan2007. From this data set, I have selected 6 columns to focus on and have  described the properties of the $N = `r nrow(dative)`$ observation in the Switchboard corpus and the Treebank Wall Street Journal collection, spoken and a written media respectively. The percentage of the spoken medium, Switchboard corpus, is `r as.double(printnum(corpusmean, digits = 2))*100`%, which is also integrated into the model I will use in this paper. The selected columns from this dataset form the basis of this paper’s analysis. 
+
+
+# Definitions
+In this section, I will provide definitions for keywords I use throughout the paper. According to @MartinHaspelmath2013, ditransitive verbs are verbs with two arguments in addition to the subject: a “recipient” or “addressee” argument, and a “theme” argument. While the recipient is a special kind of goal where the action is directed towards and which is associated with verbs expressing a change in ownership, the theme is the element that undergoes the action but does not change its state. [@Dowty1991] 
+
+The definiteness of a phrase is determined with other elements that precede it in the dataset. Certain determiners such as *a/an, many, some,* and *either* mark an NP as indefinite whereas others, including *the, this, every,* and *both* mark an NP as definite. [@Huddleston2002] In the dataset, accessibility columns consist of three unique types of information: given, new, and accessible. These columns identify the context accessibility of the recipient and the theme. *New* accessibility implies that the element uttered is newly introduced to the discourse, *given* means that it was already uttered in the interaction, and *accessible* means even though it is not explicitly introduced to the discourse, it is available in the discourse.
+
+
+# What to Expect from Data
+
+Before starting to fit a model, I will demonstrate relevant averages and interactions from the dataset graphically in order to show the relevant relationships and to offer a better understanding of what to expect and what not to expect.
+
+# Plot of Marginal Effect of Definiteness
+As can be seen in *Figure 1*, the percentage of NP realization of the recipient is affected significantly by both the definiteness of theme and definiteness of recipient. While theme definiteness decreases the chance of NP realization of the recipient, definiteness of the recipient increases the percentage. However, the effect of the medium the sentences are formed has an great effect on the differences between the possible formations. While the NP realization of the recipient is higher in the written medium, Treebank Wall Street, when the recipient is definite, the effect of corpora slightly different when the recipient is indefinite such that only the combination of indefinite recipient and theme seems to be affected. 
+
+```{r def_plots, message=FALSE, warning=FALSE, include=FALSE}
+i_def <- dative %>% group_by(DefinOfRec 
+                             , DefinOfTheme
+                             , corpus) %>% dplyr::summarise(pRR = mean(RR) 
+                                                            , nRR = length(RR))
+
+mean_def <- i_def %>% ggplot(aes( x = DefinOfRec 
+                                  , y = pRR 
+                                  , group = DefinOfTheme 
+                                  , color = DefinOfTheme)) + 
+  geom_line() + 
+  geom_point() + 
+  facet_wrap(~corpus)
+
+mean_def_fancy <- mean_def + theme_bw() + 
+  scale_y_continuous(labels = function(x){ paste0(100 * x, "%") }) + 
+  ylab("Percentage of NP Realization of Recipient") + 
+  xlab("Definiteness of Recipient") +
+  scale_color_hue( name = "Definiteness of Theme") + 
+  labs(title = "Effects of the Definiteness of Theme and Recipient"
+       , caption = "The rates of marginal effects of definiteness regarding corpora") + 
+  theme_apa()
+```  
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+print(mean_def_fancy)
+
+```
+
+# Plot of Marginal Effect of Accessibility
+```{r message=FALSE, warning=FALSE, include=FALSE}
+i_acc <- dative %>% group_by(AccessOfRec 
+                             , AccessOfTheme
+                             , corpus) %>% dplyr::summarise(pRR = mean(RR)
+                                                            , nRR = length(RR))
+```
+As for the *Effects of Accessibility of Theme and Recipient*, while the accessible and new theme do not really differ in terms of the percentage of NP realization of recipient, the given theme definitely and rather substantially decreases the NP realization tendency. The most plausible scenario for NP Realization is when the theme is new, and the recipient is given with the percentage of `r as.double(printnum(i_acc$pRR[6], gt1=FALSE , digits = 3))*100`%.
+
+While the accessible and and new themes and recipients seem to behave similarly, the differances between the averages of accessible recipient in a spoken medium is slightly more pronounced.
+
+```{r acc_plots, echo=FALSE, message=FALSE , warning=FALSE}
+
+mean_acc <- i_acc %>% ggplot(aes( x = AccessOfRec 
+                                  , y = pRR 
+                                  , group = AccessOfTheme 
+                                  , color = AccessOfTheme)) + 
+  geom_line() + 
+  geom_point() + 
+  facet_wrap(~corpus)
+
+mean_acc_fancy <- mean_acc + 
+  theme_bw() + 
+  scale_y_continuous(labels = function(x){ paste0(100 * x, "%") }) + 
+  ylab("Percentage of NP Realization of Recipient") + xlab("Access of Recipient") + 
+  scale_color_hue("Access of Theme") + 
+  labs(title = "Effects of Accessibility of Theme and Recipient"
+       , caption = "The rates of marginal effects of definiteness regarding corpora") + 
+  theme_apa()
+print(mean_acc_fancy)
+
+```
+
+# Plot of Marginal Effect of Recipient
+The effects related to the characteristics of the recipient are shown in *Figure 3*. It follows my first hypothesis which implied that there would be a tendency toward an NP realization if the recipient was more relevant in the discourse. Looking at *Figure 3*, one can easily argue that when the recipient is *given* in the discourse and is definite, English speakers put the recipient in the primary position, making it a noun phrase rather than a prepositional phrase. Interaction between the Access and the Definiteness of the recipient is not non-existent, yet the definiteness of recipient effect is secondary at best and negligible in the spoken corpus. However, accesible and new indefinite recipients in the written corpus seem to behave quite similarly in terms of the percentage of the NP realization of recipient. 
+
+```{r rec_plots, echo=FALSE, message=FALSE, warning=FALSE}
+
+i_rec <- dative %>% group_by(DefinOfRec 
+                             , AccessOfRec
+                             , corpus) %>% dplyr::summarise(pRR = mean(RR) 
+                                                            , nRR = length(RR))
+
+mean_rec <- i_rec %>% ggplot(aes( x = DefinOfRec 
+                      , y = pRR 
+                      , group = AccessOfRec
+                      , color = AccessOfRec)) + 
+  geom_line() + 
+  geom_point() + 
+  facet_wrap(~corpus)
+
+mean_rec_fancy <- mean_rec + 
+  theme_bw() + 
+  scale_y_continuous(labels = function(x){ paste0(100 * x, "%") }) + 
+  ylab("Percentage of NP Realization of Recipient") + 
+  xlab("Definiteness of Recipient") + 
+  scale_color_hue("Access of Recipient") + 
+  labs(title = "Effects of Characteristics of Recipient"
+       , caption = "The rates of marginal effects of recipient regarding corpora") + 
+  theme_apa()
+print(mean_rec_fancy)
+```
+
+# Plot of Marginal Effect of Theme  
+```{r message=FALSE , warning=FALSE, include=FALSE}
+i_thm <- dative %>% group_by(AccessOfTheme 
+                             , DefinOfTheme
+                             , corpus) %>% dplyr::summarise(pRR = mean(RR)
+                                                            , nRR = length(RR))
+
+```
+The percentage of NP realization of recipient in the data as a function of the access and the definiteness of theme is shown in *Figure 4*. Among the four plots, this one clearly stands out. When the theme is definite, the NP Realization of Recipient Hierarchy follows as such: *Accessible > New > Given*, which follows my hypothesis. When the theme is indefinite, the effect of accessibility seems to be almost disregarded. The percentages of NP realization of recipient are 75% and 94 % in spoken and written media respectively when the theme is given and indefinite. We would expect a lot less NP realization of recipient from a given theme, yet the indefiniteness characteristics outweights the accessibility of theme.
+
+However, looking at the numbers in the accessible discourse, we can easy infer that there is a somewhat fixed percentage. There must be an interaction that tilts the percentages as such.
+
+```{r thm_plots, echo=FALSE, message=FALSE, warning=FALSE}
+
+mean_thm <- i_thm %>% ggplot(aes( x = DefinOfTheme 
+                      , y = pRR 
+                      , group = AccessOfTheme
+                      , color = AccessOfTheme)) + 
+  geom_line() + 
+  geom_point() +
+  facet_grid(~corpus)
+
+mean_thm_fancy <- mean_thm + 
+  theme_bw() + 
+  scale_y_continuous(labels = function(x){ paste0(100 * x, "%") }) + 
+  ylab("Percentage of NP Realization of Recipient") + xlab("Definiteness of Theme") + 
+  scale_color_hue("Accessibility of Theme") + 
+  labs(title = "Effects of Characteristics of Theme"
+       , caption = "The rates of marginal effects of theme regarding corpora") + 
+  theme_apa()
+print(mean_thm_fancy)
+```
+
+# Hypothesis
+After looking at the plots and the dataset, my hypothesis is that NP realization of recipient increases with definite recipients and indefinite themes. Also, the more familiar is the recipient, the more NP realization of recipient we should see, and as the theme become more familiar, I expect less NP realization of recipient. However, the effects of corpora is more subtle, I definitely expect an effect between spoken and written media, yet there is no clear cut move towards more or less NP realization of recipient.
+
+# Methods
+In the dataset, I included only 6 columns from the data, which are discussed in the paper. The purpose of the paper is to identify the effects of those variables; the rest is not included. Moreover, sum contrasts are utilized for the definiteness of theme, the definitneess of recipient, and the corpora while helmert contrasts are used for the accessibility of recipient and the accessibility of theme in the model. 
+
+Apart from the relative information provided in the section titles **Dataset**, I used `r cite_r("r-references.bib")` for the analyses, figures, and the tables provided in the paper.
+
+# Procedure and Data Analysis
+
+Having explained the dataset, problem, and what to expect from the dataset, we can advance to our model. First, the display of the model used in the paper can be found below.
+$$Realization_i \sim Bernoulli(\mu_i)$$
+$$logit(\mu_i) = \alpha+\beta_{DoR}\times{DoR}+\beta_{AoR}\times{AoR}+\gamma_{i}\times{DoT_i}+\beta_{AoT}\times{AoT_i}+\beta_{corpora}\times{Corpora}+\gamma_k+\gamma_j$$
+$$\gamma_i = \beta_{DoT}+\beta_{AoTDoT}AoT_i$$
+$$\gamma_k = \beta_{corporaDoT}\times{Corpora\times{DoT}}$$
+$$\gamma_j = \beta_{corporaDoR}\times{Corpora\times{DoR}}$$
+In the model specified above, we used two linear models, which leads to a logistic regression. The first line defines the likelihood function I used; it is a Bernoulli distribution with logit link, which is specified in the second line. The likelihood function consists of additive definition integrated with another additive definition $\gamma_i$ which is a placeholder for the linear function that defines the slope between *Definiteness of Theme* and *Access of Theme*. *DoR, AoR, DoT, AoT* stands for the definiteness of recipient, the accessibility of recipient, the definiteness of theme, and the definiteness of theme, respectively. Also, $\gamma_k$ and $\gamma_j$ represents the interaction between the definiteness of theme and recipient, respectively. Each $\beta$ stands for the coefficient relevant to the indeendent variable. This model is run through [@R-brms], which sets improper flat priors by default. These priors are not changed. Further analyses may be focused on identifying the relevant priors and using them.
+
+All models, interpretations, and functions are run through and interpreted via Bayes Theorem. The primary underlying motivation behind the utilization of Bayes Theorem is the fact that it provides me with interpretable and reproducable answers without any fee except the computational power of my processor. Even though the dataset’s sample size is rather large, reducing Bayes Theorem’s importance to some degree, describing and updating the probabilities of my hypothesis given the evidence carry utmost importance for this paper. Since the Bayesian Analysis complies with my likelihood function, the additive evidence, and allows me to use a computationally-rich MCMC model, I ran such and analysis and interpreted the output using a Bayesian approach.  
+
+
+# Results
+
+```{r model fit paperinstruction, message=FALSE, warning=FALSE, include=FALSE}
+# how was the model fit CHAPTER 5 or 6, MCMC: start with bayes theorem, explain the course
+dative$RealizationOfRecipient %<>% as.factor()
+dative$DefinOfRec %<>% as.factor()
+dative$DefinOfTheme %<>% as.factor()
+dative$AccessOfTheme %<>% as.factor()
+dative$AccessOfRec %<>% as.factor()
+dative$corpus %<>% as.factor()
+contrasts(dative$DefinOfRec) <- contr.sum(2)
+contrasts(dative$DefinOfTheme) <- contr.sum(2)
+contrasts(dative$AccessOfTheme) <- contr.helmert(3)
+contrasts(dative$AccessOfRec) <- contr.helmert(3)
+contrasts(dative$RealizationOfRecipient) <- contr.sum(2)
+contrasts(dative$corpus) <- contr.sum(2)
+contrasts(dative$AccessOfTheme)[,1] <- c(1 , 0 , -1)
+contrasts(dative$AccessOfRec)[,1] <- c(1 , 0 , -1)
+contrasts(dative$AccessOfTheme)[,2] <- c(-1 , 2 , -1)
+contrasts(dative$AccessOfRec)[,2] <- c(-1 , 2 , -1)
+
+set.seed(42)
+model <- brm(formula = RealizationOfRecipient ~ 1 + 
+               DefinOfTheme * AccessOfTheme + 
+               DefinOfRec + 
+               AccessOfRec + 
+               corpus + 
+               corpus:DefinOfTheme + 
+               corpus:DefinOfRec  
+                      , data = dative 
+                      , family = bernoulli("logit")
+)
+```
+```{r summary, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+summary <- read.csv("sum.csv") %>% as.data.frame()
+summary$Rhat <- ifelse(summary$Rhat == 1
+                       , "1.00"
+                       , "0")
+summary[,1] = c("Intercept"
+                       , "Theme Definiteness"
+                       , "Theme Accessibility" 
+                       , "Theme Givenness"
+                       , "Recipient Definiteness" 
+                       , "Recipient Accessibility" 
+                       , "Recipient Givenness"
+                       , "Spoken Medium"
+                       , "Definite Theme Accessibility"
+                       , "Definite Theme Givenness"
+                       , "Definite Theme in Spoken Corpus"
+                       , "Definite Rec. in Spoken Corpus")
+apa_table(
+  summary
+  , caption = "Inferential Statistics of NP Realization of Recipients")
+```
+
+The summary of our model is specified below in *Table 1* without credible intervals. Rows in the table shows names of covariates, their estimates, Rhat value of the model, and effective sample size. The *Table 1* specifies that our model is converged succesfully.
+
+# Discussion
+```{r samples, message=FALSE, warning=FALSE, include=FALSE}
+mposterior <- brms::posterior_samples(model)
+mposteriorpredict <- brms::posterior_summary(model)
+
+```
+
+```{r discuss hpdis, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+hpdis <- coda::HPDinterval(as.mcmc(model, combine_chains = TRUE), prob = 0.89) %>% round(2) %>% as.data.frame()
+row.names(hpdis) = c("Intercept"
+                       , "Theme Definiteness"
+                       , "Theme Accessibility" 
+                       , "Theme Givenness"
+                       , "Recipient Definiteness" 
+                       , "Recipient Accessibility" 
+                       , "Recipient Givenness"
+                       , "Spoken Medium"
+                       , "Definite Theme Accessibility"
+                       , "Definite Theme Givenness"
+                       , "Definite Theme in Spoken Corpus"
+                       , "Definite Rec. in Spoken Corpus"
+                       , "lp")
+apa_table(
+  hpdis
+  , caption = "Highest Posterior Density Intervals")
+
+```
+
+As we look at the *Highest Posterior Density Intervals* with %89 probability, only HPDIs not excluding 0 in their interval are our *Intercept* and *Theme Accessibility* . As for the HPDIs, *Table 2* below shows that what we have predicted in the **Hypothesis** section is strinkingly wrong for the definiteness of theme and recipient. Theme definiteness affect the NP realizations of recipient positively while recipient definiteness decreases the chance of NP realization of recipient in English. 
+
+Upon looking at accessibility characteristics of the arguments, we see that the difference between accessible and new theme is completely negligible. It has almost a random effect on NP realization of recipient with slight edge towards negative. Yet, *Theme Givenness* affects positively while *Recipient Givenness* and *Recipient Accessibility* definitely have a negative effect in our model. Also, the difference between accessible recipient and given recipient is not negligible considering that they do not overlap in ther highest posterior density intervals.
+
+Moreover, English speakers tend to use more noun phrases for recipient in dative structures in the *Spoken Medium*, and definiteness of theme in spoken discourse effects negatively whereas the interaction between definite recipient and spoken corpus is headed towards positive.
+
+As for the interaction between the characteristics of theme, accessibility of theme when it is definite affects the NP realization of recipient negatively. Thus, when we have an accessible theme which is we are familiar with, we tend to use less NP. However, when the theme is given in the speech we definitely use a lot more noun phrases for recipients. 
+
+Looking from the whole picture, the model do not suggest exact opposite of what we have predicted, nor it does not conform with our hypothesis. It tends to conform to our hypothesis in interactions. However, the inference from the definiteness scale is completely new to us. 
+
+We may need to change with which mentality we look at the data. the reason behind the NP realization may not be in line with relevalance principle, yet it may be about other hypothesis where people try to give the new information as soon as possible eagerly and use the secondary position as a safe zone. This question may also be related with the length of recipient and theme, which we did not discuss in this paper.
+
+All this confusing table shows us that further research is necessary. A better model, another model with more variables, or crosslinguistic data can shed light upon this question. Also, others paper regarding the mental process behind sentence structures can help us on the way. 
+
+
+\pagebreak
+
+
+# References
+```{r create_r-references}
+r_refs(file = "r-references.bib")
+```
+
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+\linespread{1}

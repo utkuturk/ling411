@@ -1,0 +1,4 @@
+"0","i_acc <- dative %>% group_by(AccessOfRec "
+"0","                             , AccessOfTheme"
+"0","                             , corpus) %>% dplyr::summarise(pRR = mean(RR)"
+"0","                                                            , nRR = length(RR))"

@@ -1,0 +1,43 @@
+probability of coin on monday > generic monday
+joint probability Pr(coin, Monday) / Pr(Monday)
+                  Pr(coin|Monday) the same thing
+
+coin fairness is = .5
+buttered toast Pbt > .5
+
+english dative? preference for np or pp? the question of animacy?
+Pnp > 0.5
+
+P(NP|animate) > P(NP|inanimate)
+
+WE NEED TO TRANSLATE THE QUESTIONS INTO QUESTIONS ABOUT PROBABILITY DISTRIBUTIONS OVER PARAMETERS.
+probabilty of probability of the parameter being .5, given the data.
+that s why we use bayesian.
+p(hypothesis|data) = p(data|hypothesis) * p(hypothesis)
+p(d|h) = p(h,d) / p(d)
+p(h|d) = p(h,d) / p(h)
+
+we essentially get this:
+
+p(h|d) = (P(data|hypothesis)*p(hypothesis)) / p(data)
+
+p(data) is the model. it is the small world. it is only in bayesian statistics. it is the plausability of the data given the my world knowledge. 
+
+likelihood function, prior distribution, a way to combine them to arrive at a posterior distribution.
+
+LIKELIHOOD
+likelihood functions: bernoulli distributions: prb. of success where only one of 2 outcomes is possible. success or failure.
+p(x=1) = p,P(x=0)=1 - p
+
+binomial distribution: the prb of K successes in n trials where only one of 2 outcames is possible. parameters n p
+for us: dbinom
+
+other likelihood functions: poisson: is just like binominal. prb of K successes in a fixed interval of time, or area. 
+for us: dpois
+
+goussiaan: the distribution many sampling distributions converge to, as the sample size increases.
+for us: dnorm
+
+likelehood is closely related to the sampling distribution.
+
+

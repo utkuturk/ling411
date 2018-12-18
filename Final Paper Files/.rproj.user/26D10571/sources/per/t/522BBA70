@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1515325657688.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "0|3|34|0|\n36|32|49|0|\n50|13|82|0|\n83|13|87|0|\n88|13|93|0|\n94|26|97|0|\n98|41|128|0|\n129|42|161|0|\n162|38|191|0|\n192|36|224|0|\n225|12|227|0|\n228|9|232|0|\n233|29|245|0|\n",
+    "hash" : "649913577",
+    "id" : "522BBA70",
+    "lastKnownWriteTime" : 1515527381,
+    "last_content_update" : 1515527381438,
+    "path" : "~/Dropbox/Academia/Masters/REMEDIAL 1ST/METHODOLOGY/TERMPAPER_new/rmarkdown_utku/papaja.Rmd",
+    "project_path" : "papaja.Rmd",
+    "properties" : {
+        "cursorPosition" : "345,0",
+        "scrollLine" : "305"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

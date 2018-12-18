@@ -1,0 +1,4 @@
+"0","i_thm <- dative %>% group_by(AccessOfTheme "
+"0","                             , DefinOfTheme"
+"0","                             , corpus) %>% dplyr::summarise(pRR = mean(RR)"
+"0","                                                            , nRR = length(RR))"

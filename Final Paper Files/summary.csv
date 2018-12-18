@@ -1,0 +1,13 @@
+                             Estimate Est.Error Eff.Sample Rhat
+Intercept                       -0.14      0.12      2731 1.00
+DefinOfTheme1                    0.76      0.11      2054 1.00
+AccessOfTheme1                   0.57      0.15      2066 1.00
+AccessOfTheme2                  -0.19      0.07      2595 1.00
+DefinOfRec1                     -0.20      0.07      4000 1.00
+AccessOfRec1                    -1.09      0.07      3956 1.00
+AccessOfRec2                     0.77      0.05      4000 1.00
+corpus1                          0.17      0.08      4000 1.00
+DefinOfTheme1:AccessOfTheme1     1.04      0.15      2139 1.00
+DefinOfTheme1:AccessOfTheme2    -0.05      0.07      2716 1.00
+DefinOfTheme1:corpus1           -0.13      0.07      4000 1.00
+DefinOfRec1:corpus1              0.15      0.06      4000 1.00

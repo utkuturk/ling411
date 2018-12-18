@@ -1,0 +1,11 @@
+"0","library(brms)
+"
+"2","Loading required package: Rcpp
+"
+"2","Loading 'brms' package (version 2.0.1). Useful instructions
+can be found by typing help('brms'). A more detailed introduction
+to the package is available through vignette('brms_overview').
+Run theme_set(theme_default()) to use the default bayesplot theme.
+"
+"0","library(brms)"
+"0","library(languageR)"
